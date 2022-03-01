@@ -5,6 +5,8 @@ import execa from 'execa'
 import { outputFileSync } from 'fs-extra'
 import Listr from 'listr'
 
+import { errorTelemetry } from '@redwoodjs/telemetry'
+
 import { getPaths } from '../../../../lib'
 import c from '../../../../lib/colors'
 
@@ -28,9 +30,11 @@ export const builder = (yargs) => {
 }
 
 const tailwindImports = [
-  '@import "tailwindcss/base";',
-  '@import "tailwindcss/components";',
-  '@import "tailwindcss/utilities";',
+  // using outer double quotes and inner single quotes here to generate code
+  // the way prettier wants it in the actual RW app where this will be used
+  "@import 'tailwindcss/base';",
+  "@import 'tailwindcss/components';",
+  "@import 'tailwindcss/utilities';",
 ]
 
 const tailwindImportsExist = (indexCSS) =>
@@ -150,6 +154,7 @@ export const handler = async ({ force, install }) => {
   try {
     await tasks.run()
   } catch (e) {
+    errorTelemetry(process.argv, e.message)
     console.error(c.error(e.message))
     process.exit(e?.exitCode || 1)
   }
